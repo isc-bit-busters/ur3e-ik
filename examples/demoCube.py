@@ -22,7 +22,7 @@ def compute_inverse_kinematics(position, roll, pitch, yaw):
     
     return joint_solutions
 
-def generate_trajectory(data, filename="trajectory.json"):
+def generate_trajectory_file(data, filename="trajectory.json"):
     modTraj = []
     time_step = 2  # Incrément du temps
     time = 4
@@ -102,11 +102,20 @@ def compute_orientation_towards_target(origin, target, offset=(0.0, 0.0, 0.0)):
     return np.degrees(roll) + offset[0], np.degrees(pitch) + offset[1] , np.degrees(yaw) + offset[2]
 
 
-def transform_coordinates_to_joint_angles(coordinates):
+def transform_coordinates_to_joint_angles(coordinates, orientation=(None, None, None)):
     joint_angles = []
-    offset=(0.0, 89.9, 0.0)
+    
     for position in coordinates:
-        roll, pitch, yaw = compute_orientation_towards_target(origin=position, target=[position[0], position[1], 0.0], offset=offset)
+        # check if orientation is provided and for each three angles not None
+        roll, pitch, yaw = orientation
+        if roll is not None and pitch is not None and yaw is not None:
+            pass
+
+        else:
+            print("Orientation is not provided. Computing orientation towards target bottom.")
+            # Offset to look at the bottom of the cube
+            offset=(0.0, 89.9, 0.0)
+            roll, pitch, yaw = compute_orientation_towards_target(origin=position, target=[position[0], position[1], 0.0], offset=offset)
         joint = compute_inverse_kinematics(position, roll, pitch, yaw)
         if joint is not None:
             joint_angles.append(joint)
@@ -115,17 +124,23 @@ def transform_coordinates_to_joint_angles(coordinates):
             pass
     return joint_angles
 
-
 # Generate and visualize the path
+# origin is the start position of the cube first corner where it will start filling the cube (and z is the height of the cube, so the arm will stay to the same altitude)
+# direction is the direction of the cube filling
+# width is the width of the cube
+# length is the length of the cube
+# step is the step of the filling (how much the arm will move in the cube)
+# depth is how much the arm will go down when it reach the end of the cube
 path = generate_path_square(origin=(0.2, 0.2, 0.2), direction=(1, 0, 0), width=0.15, length=0.15, step=0.05, depth=0.05)
 
 print("Number of paths :", len(path))
 
 print("Computing joint angles...")
-joint_trajectory = transform_coordinates_to_joint_angles(path)
+
+# Compute joint angles for the generated path (list of (x, y, z) points). Could be used with other paths such as circle, triangle, line, etc.
+joint_trajectory = transform_coordinates_to_joint_angles(path, orientation=(0, 179.942, 0)) # Orientation, roll, pitch and yaw, defined in degree. 180 to look to the bottom (180 degree make issue, so 179.942 is the closest value to 180 degree that works)  
 print("Joint Trajectory for Square:")
 print(joint_trajectory)
 
-
-    # Generate trajectory file
-generate_trajectory(joint_trajectory, filename="square_trajectory.json")
+# Generate trajectory file, to be used with the UR robot (URSim or real robot)
+generate_trajectory_file(joint_trajectory, filename="square_trajectory.json")
