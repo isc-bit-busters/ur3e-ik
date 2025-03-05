@@ -9,7 +9,7 @@ import json
 # Initialize the UR3e Kinematics
 ur3e_arm = ur_kinematics.URKinematics('ur3e')
 
-def compute_inverse_kinematics(position, roll, pitch, yaw):
+def compute_inverse_kinematics(position, roll, pitch, yaw, last_joint=None):
     # Convert roll, pitch, yaw to quaternion
     quaternion = R.from_euler('xyz', [roll, pitch, yaw], degrees=True).as_quat()
     q_w, q_x, q_y, q_z = quaternion  # Extract quaternion elements
@@ -18,7 +18,10 @@ def compute_inverse_kinematics(position, roll, pitch, yaw):
     ik_input = np.array([*position, q_w, q_x, q_y, q_z])
     
     # Compute inverse kinematics
-    joint_solutions = ur3e_arm.inverse(ik_input)
+    if last_joint is not None:
+        joint_solutions = ur3e_arm.inverse(ik_input, q_guess=last_joint)
+    else:
+        joint_solutions = ur3e_arm.inverse(ik_input)
     
     return joint_solutions
 
@@ -104,6 +107,8 @@ def compute_orientation_towards_target(origin, target, offset=(0.0, 0.0, 0.0)):
 
 def transform_coordinates_to_joint_angles(coordinates, orientation=(None, None, None)):
     joint_angles = []
+
+    last_joint = None
     
     for position in coordinates:
         # check if orientation is provided and for each three angles not None
@@ -116,8 +121,9 @@ def transform_coordinates_to_joint_angles(coordinates, orientation=(None, None, 
             # Offset to look at the bottom of the cube
             offset=(0.0, 89.9, 0.0)
             roll, pitch, yaw = compute_orientation_towards_target(origin=position, target=[position[0], position[1], 0.0], offset=offset)
-        joint = compute_inverse_kinematics(position, roll, pitch, yaw)
-        if joint is not None:
+        joint = compute_inverse_kinematics(position, roll, pitch, yaw, last_joint)
+        if joint is not last_joint:
+            last_joint = joint
             joint_angles.append(joint)
         else:
             print("No solution found for position", position)
