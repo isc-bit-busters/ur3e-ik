@@ -129,16 +129,18 @@ def generate_trajectory(data, filename="trajectory.json"):
        
     """
     modTraj = []
-    time_step = 1  # Incrément du temps
-    time = 4
+    time_step = 100000000  # Incrément du temps
+    time = 4000000000
     
     for arr in data:
         positions = [round(float(x), 4) if abs(x) >= 1e-4 else 0.0 for x in arr]
         velocities = [0.0] * 6  # Vélocités à zéro
+        ns_time = time % 1000000000
+        s_time = int((time - ns_time)/1000000000)
         modTraj.append({
             "positions": positions,
             "velocities": velocities,
-            "time_from_start": [time, 0]
+            "time_from_start": [s_time, ns_time]
         })
         time += time_step
     
