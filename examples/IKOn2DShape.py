@@ -46,19 +46,19 @@ def compute_inverse_kinematics(pos_raw, previous_angles):
 
 def compute_orientation_towards_target(origin, target):
     """
-    [DESC]
+    Computes the orientation of the robotic arm such that it is facing towards a given target.
 
     Parameters
     ----------
-    origin : 
-        
-    target : 
-
+    origin : list[float]
+        The starting position of the robot's end-effector [x, y, z].
+    target : list[float]
+        The target position that the robot should face [x, y, z].
 
     Returns
     -------
-    
-       
+    tuple[float, float, float]
+        The computed roll, pitch, and yaw angles (in degrees) to face the target. 
     """
     direction = np.array(target) - np.array(origin)
     direction = direction / np.linalg.norm(direction)
@@ -112,21 +112,21 @@ def compute_joint_trajectory_for_points_tab(points, home):
     return joint_trajectory
 
 
-def generate_trajectory(data, filename="trajectory.json"):
+def generate_trajectory_file(data, filename="trajectory.json"):
     """
-    [DESC]
+    Generates a JSON trajectory file from the computed joint trajectory data.
 
     Parameters
     ----------
-    data : 
-        
-    filename : 
-
+    data : list[list[float]]
+        The joint trajectory data containing joint positions.
+    filename : str, optional
+        The name of the output JSON file (default is "trajectory.json").
 
     Returns
     -------
-    
-       
+    None
+        The function writes the trajectory data into a JSON file.
     """
     modTraj = []
     time_step = 100000000  # Incrément du temps
@@ -239,4 +239,4 @@ traj = compute_joint_trajectory_for_points_tab(interpolated_traj, home)
 traj = [home] + traj + [home]
 
 # Generate trajectory file
-generate_trajectory(traj, filename="traj.json")
+generate_trajectory_file(traj, filename="traj.json")
