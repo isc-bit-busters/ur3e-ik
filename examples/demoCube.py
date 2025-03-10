@@ -13,7 +13,7 @@ def compute_inverse_kinematics(position, roll, pitch, yaw, last_joint=None):
     # Convert roll, pitch, yaw to quaternion
     quaternion = R.from_euler('xyz', [roll, pitch, yaw], degrees=True).as_quat()
     q_w, q_x, q_y, q_z = quaternion  # Extract quaternion elements
-    
+
     # Construct the 7-element vector format [tx, ty, tz, qw, qx, qy, qz]
     ik_input = np.array([*position, q_w, q_x, q_y, q_z])
     
@@ -31,6 +31,8 @@ def generate_trajectory_file(data, filename="trajectory.json"):
     time = 4
     
     for arr in data:
+        if arr is None:
+            continue
         positions = [round(float(x), 4) if abs(x) >= 1e-4 else 0.0 for x in arr]
         velocities = [0.0] * 6  # Vélocités à zéro
         modTraj.append({
@@ -144,7 +146,7 @@ print("Number of paths :", len(path))
 print("Computing joint angles...")
 
 # Compute joint angles for the generated path (list of (x, y, z) points). Could be used with other paths such as circle, triangle, line, etc.
-joint_trajectory = transform_coordinates_to_joint_angles(path, orientation=(0, 179.942, 0)) # Orientation, roll, pitch and yaw, defined in degree. 180 to look to the bottom (180 degree make issue, so 179.942 is the closest value to 180 degree that works)  
+joint_trajectory = transform_coordinates_to_joint_angles(path, orientation=(0, 180, 0)) # Orientation, roll, pitch and yaw, defined in degree. 180 to look to the bottom (180 degree make issue, so 179.942 is the closest value to 180 degree that works)  
 print("Joint Trajectory for Square:")
 print(joint_trajectory)
 

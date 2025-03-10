@@ -81,7 +81,7 @@ class URKinematics():
         elif rotation_type == 'quaternion':
             return pose_quaternion_from_matrix(ee_pose)
 
-    def inverse(self, ee_pose, all_solutions=False, q_guess=np.zeros(6)):
+    def inverse(self, ee_pose, all_solutions=False, q_guess=np.zeros(6), max_retries=5, pertubation=1e-3):
         """ Compute robot's inverse kinematics for the specified robot
             ee_pose: list of 7 if quaternion [x, y, z, qx, qy, qz, w]
                      list of 12 if rotation matrix + translational values
@@ -98,15 +98,27 @@ class URKinematics():
             pose = np.concatenate((ee_pose[:3], rot), axis=0)
         else:
             pose = ee_pose
-        joint_configs = self.kinematics.inverse(pose.reshape(-1).tolist())
-        n_solutions = int(len(joint_configs)/self.n_joints)
-        joint_configs = np.asarray(joint_configs).reshape(n_solutions, self.n_joints)
 
-        if all_solutions:
-            return joint_configs
+        for attempt in range(max_retries):
+            joint_configs = self.kinematics.inverse(pose.reshape(-1).tolist())
+            n_solutions = int(len(joint_configs)/self.n_joints)
+            joint_configs = np.asarray(joint_configs).reshape(n_solutions, self.n_joints)
 
-        return best_ik_sol(joint_configs, q_guess)
+            if n_solutions > 0:
+                if all_solutions:
+                    return joint_configs
+                return best_ik_sol(joint_configs, q_guess)
+            
+            # Pertubate the pose and try again if no solution is found
+            # print(f"Failed to find a solution, pertubating the pose by {pertubation} for attempt {attempt+1}")
+            if len(ee_pose) == 7:
+                pose[3:] += np.random.uniform(-pertubation, pertubation, 4)
+                pose[3:] /= np.linalg.norm(pose[3:])
+            else:
+                pose[3:12] += np.random.uniform(-pertubation, pertubation, 9)
 
+        # print("Failed to find a solution")
+        return None
 
 def best_ik_sol(sols, q_guess, weights=np.ones(6)):
     """ Get best IK solution """
