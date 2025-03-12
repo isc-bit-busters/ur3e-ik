@@ -24,6 +24,13 @@ cd ur_ikfast
 pip install -e .
 ```
 
+or directly from the git url :
+
+```shell
+pip install https://github.com/6figuress/ur3e-ik.git
+```
+
+
 It takes a few minutes to compile the IKfast libraries.
 
 ## Example
