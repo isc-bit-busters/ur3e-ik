@@ -41,38 +41,6 @@ def compute_inverse_kinematics(pos_raw, previous_angles):
 
 
 
-def compute_orientation_towards_target(origin, target):
-    """
-    Computes the orientation of the robotic arm such that it is facing towards a given target.
-
-    Parameters
-    ----------
-    origin : list[float]
-        The starting position of the robot's end-effector [x, y, z].
-    target : list[float]
-        The target position that the robot should face [x, y, z].
-
-    Returns
-    -------
-    tuple[float, float, float]
-        The computed roll, pitch, and yaw angles (in degrees) to face the target. 
-    """
-    direction = np.array(target) - np.array(origin)
-    direction = direction / np.linalg.norm(direction)
-
-    # Compute yaw (rotation around z-axis)
-    yaw = np.arctan2(direction[1], direction[0])
-    
-    # Compute pitch (rotation around y-axis)
-    pitch = np.arcsin(-direction[2])  # Assuming standard convention where downward is negative
-    
-    # Roll is assumed to be zero (no rotation around x-axis)
-    roll = 0.0
-    
-    return np.degrees(roll), np.degrees(pitch), np.degrees(yaw)
-
-
-
 def compute_joint_trajectory_for_points_tab(points, home):
     """
     Computes the inverse kinematics for a list of points.
@@ -194,7 +162,7 @@ def interpolate_lines(points, threshold):
             for j in range(1, n_parts):
                 # for each step of the interpolation to be done
                 # computes the next point and adds it to the list
-                new_point = [round(x1 + j*dif_x/n_parts,5), round(y1 + j*dif_y/n_parts,5), round(z1 + j*dif_z/n_parts,5), p1[3], p1[4], p1[5]]
+                new_point = [round(x1 + j*dif_x/n_parts,5), round(y1 + j*dif_y/n_parts,5), round(z1 + j*dif_z/n_parts,5), p1[3], p1[4], p1[5], p1[6]]
                 new_points.append(new_point)
 
         # adds the last point of the interpolated line
