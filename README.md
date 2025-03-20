@@ -54,6 +54,42 @@ print("inverse() one from quat", ur3e_arm.inverse(pose_quat, False, q_guess=join
 print("inverse() one from matrix", ur3e_arm.inverse(pose_matrix, False, q_guess=joint_angles))
 ```
 
-For a new robot just create the ikfast database (.cpp) following one of these tutorials:
-- http://docs.ros.org/kinetic/api/framefab_irb6600_support/html/doc/ikfast_tutorial.html
-- http://docs.ros.org/kinetic/api/moveit_tutorials/html/doc/ikfast/ikfast_tutorial.html
+## To create the files for a new robot, you can follow these steps (or ask Zeb)
+
+### Install ros:
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+
+sudo apt install curl\
+curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+
+sudo apt update\
+sudo apt install ros-noetic-desktop-full
+
+sudo rosdep init\
+rosdep update
+
+echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc\
+source ~/.bashrc
+
+rosversion -d \
+(should return "noetic")
+
+
+### Get a docker image for openrave (don't try to install it in local trust me)
+docker pull hamzamerzic/openrave
+
+
+### File creation pipeline
+1. Modifiy or create a .urdf file
+2. Run the command in local: rosrun collada_urdf urdf_to_collada [robot_name].urdf [robot_name].dae \
+Ex. rosrun collada_urdf urdf_to_collada ur3e.urdf ur3e.dae
+3. Make an xml wrapper called [robot_name].wrapper.xml (example in the ur3e directory)
+4. Pass these files to a running instance of the docker image (manually or with a volume in a docker compose)
+5. Run the command in the docker: openrave.py --database inversekinematics --robot=[wrapper_name].xml --iktype=transform6d --iktests=100
+6. This should take about an hour
+7. Copy and modify an existing .pyx file for cython (there should be one per robot directory
+8. Add your robot to the setup.py in the same format as the others
+9. Run the command in local in the ur3e-ik directory: python setup.py build_ext --inplace
+10. Run the command in local: pip install -e .
+11. Add your robot to the init in ur_ikfast/ur_kinematics.py at line 45
+12. You should be able to call this: new_arm = ur_kinematics.URKinematics('[robot_name]')
