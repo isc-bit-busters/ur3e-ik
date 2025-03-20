@@ -58,15 +58,20 @@ def transform_coordinates_to_ee_poses(coordinates):
     return ik_inputs
 
 def main():
+    print("Running demoOptimalIKSol.py")
     robot = ur_kinematics.URKinematics('ur3e')
     multi_kin = ur_kinematics.MultiURKinematics(robot)
 
+    # To get (x, y, z) positions for the path
     path = generate_path_square(origin=(0.2, 0.2, 0.2), width=0.15, length=0.15, step=0.05)
 
+    # To convert (x, y, z) positions and orientations fixed to (0, 179.942, 0) to joint angles
     ik_inputs = transform_coordinates_to_ee_poses(path)
 
+    # From a list of ee_poses, get the optimal joint trajectory
     joint_trajectory = multi_kin.inverse_optimal(ik_inputs)
-
+    print("Optimal joint trajectory:")
     print(joint_trajectory)
 
-
+if __name__ == "__main__":
+    main()
