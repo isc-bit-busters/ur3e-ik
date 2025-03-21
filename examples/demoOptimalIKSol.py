@@ -2,6 +2,8 @@ from ur_ikfast import ur_kinematics
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
+import json
+
 def generate_path_square(origin=(0, 0, 0), direction=(1, 0, 0), width=0.1, length=0.1, step=0.01, depth=0.01):
     """
     Generate a zigzag path in a square space with a defined origin and movement direction.
@@ -46,7 +48,12 @@ def generate_path_square(origin=(0, 0, 0), direction=(1, 0, 0), width=0.1, lengt
     return path
 
 def transform_coordinates_to_ee_poses(coordinates):
-    """Transform path coordinates into joint angles using inverse kinematics."""
+    """Transform path coordinates to IK input format.
+    Parameters:
+    - coordinates (list): List of (x, y, z) coordinates.
+    Returns:
+    - List of IK input poses (x, y, z, qx, qy, qz, qw).
+    """
     ik_inputs = []
     
     for position in coordinates:
@@ -57,7 +64,33 @@ def transform_coordinates_to_ee_poses(coordinates):
 
     return ik_inputs
 
+def generate_trajectory_file(data, filename="trajectory.json"):
+    modTraj = []
+    time_step = 2  # Incrément du temps
+    time = 4
+    
+    for arr in data:
+        if arr is None:
+            continue
+        positions = [round(float(x), 4) if abs(x) >= 1e-4 else 0.0 for x in arr]
+        velocities = [0.0] * 6  # Vélocités à zéro
+        modTraj.append({
+            "positions": positions,
+            "velocities": velocities,
+            "time_from_start": [time, 0]
+        })
+        time += time_step
+    
+    with open(filename, "w") as f:
+        json.dump({"modTraj": modTraj}, f, indent=4)
+    
+    print(f"Fichier JSON '{filename}' généré avec succès.")
+
 def main():
+    """
+    Main function to demonstrate the use of the optimal IK solution.
+    From a list of (x, y, z) positions, with orientations fixed to (0, 179.942, 0), we compute a list of ik_inputs and the get the optimal joint trajectory from it.
+    """
     print("Running demoOptimalIKSol.py")
     robot = ur_kinematics.URKinematics('ur3e')
     multi_kin = ur_kinematics.MultiURKinematics(robot)
@@ -72,6 +105,8 @@ def main():
     joint_trajectory = multi_kin.inverse_optimal(ik_inputs)
     print("Optimal joint trajectory:")
     print(joint_trajectory)
+
+    generate_trajectory_file(joint_trajectory, filename="square_trajectory.json")
 
 if __name__ == "__main__":
     main()

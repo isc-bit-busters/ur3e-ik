@@ -23,6 +23,10 @@ class Trajectory:
     def __str__(self):
         """ Return a string representation of the trajectory and its weight """
         return f"Trajectory: {str(self.trajectory)}, Weight: {str(self.weight)}"
+    
+    def __iter__(self):
+        """ Return an iterator for the trajectory """
+        return iter(self.trajectory)
 
     def eval_weight(self):
         """ Computes the weight of the trajectory """
