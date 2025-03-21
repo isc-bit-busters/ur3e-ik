@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from ur_ikfast.best_trajectory import Trajectory, TrajectoryPlanner
+from ur_ikfast.best_trajectory import TrajectoryPlanner
 
 def quaternion_from_matrix(matrix):
     """Return quaternion from rotation matrix.
@@ -122,7 +122,16 @@ class URKinematics():
         return None
     
     def best_ik_sol(sols, q_guess, weights=np.ones(6)):
-        """ Get best IK solution """
+        """
+        Get best IK solution
+
+        Parameters:
+            sols: list of joint angles
+            q_guess: set of joint values to find the closest solution to
+            weights: weights for each joint
+        Returns:
+            best solution
+        """
         valid_sols = []
         for sol in sols:
             test_sol = np.ones(6) * 9999.
@@ -142,11 +151,32 @@ class URKinematics():
         return valid_sols[best_sol_ind]
 
 class MultiURKinematics():
+    """
+    This class is used to compute the forward and inverse kinematics for a list of positions.
+    """
     def __init__(self, kinematics: URKinematics):
+        """
+        Initialize the MultiURKinematics object.
+        Parameters:
+            kinematics (URKinematics): URKinematics object to use for the computations
+        """
         self.kinematics = kinematics
         self.planner = TrajectoryPlanner()
 
     def inverse(self, ee_poses, all_solutions=False, q_guess=np.zeros(6), max_retries=5, pertubation=1e-3):
+        """
+        Compute the inverse kinematics for a list of end-effector poses.
+        
+        Parameters:
+            ee_poses (list): List of end-effector poses to compute the inverse kinematics for
+            all_solutions (bool): Whether to return all the solutions found or just the best one
+            q_guess (np.ndarray): Set of joint values to find the closest solution to
+            max_retries (int): Maximum number of retries to find a solution
+            pertubation (float): Pertubation to apply to the pose if no solution is found
+            
+        Returns:
+            List of joint angles for each end-effector pose (list of lists)
+        """
         solutions = []
 
         for ee_pose in ee_poses:
@@ -155,6 +185,18 @@ class MultiURKinematics():
         return solutions
     
     def inverse_optimal(self, ee_poses, q_guess=np.zeros(6), max_retries=5, pertubation=1e-3):
+        """
+        Compute the optimal joint trajectory for a list of end-effector poses.
+        
+        Parameters:
+            ee_poses (list): List of end-effector poses to compute the inverse kinematics for
+            q_guess (np.ndarray): Set of joint values to find the closest solution to
+            max_retries (int): Maximum number of retries to find a solution
+            pertubation (float): Pertubation to apply to the pose if no solution is found
+            
+        Returns:
+            List of joint angles for the optimal trajectory
+        """
         solutions = self.inverse(ee_poses=ee_poses, all_solutions=True, q_guess=q_guess, max_retries=max_retries, pertubation=pertubation)
 
         best_trajectory = self.planner.best_first_search(solutions)
@@ -162,6 +204,17 @@ class MultiURKinematics():
         return best_trajectory
     
     def forward(self, joint_angles, rotation_type='quaternion'):
+        """
+        Compute the forward kinematics for a list of joint angles.
+
+        Parameters:
+            joint_angles (list): List of joint angles to compute the forward kinematics for
+            rotation_type (str): Type of rotation to return ('quaternion' or 'matrix')
+
+        Returns:
+            List of end-effector poses for each joint angle (list of lists)
+        """
+        
         poses = []
         for joint_angle in joint_angles:
             pose = self.kinematics.forward(joint_angle, rotation_type)
