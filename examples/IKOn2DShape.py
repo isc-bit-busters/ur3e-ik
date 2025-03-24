@@ -171,6 +171,44 @@ def interpolate_lines(points, threshold):
     return new_points
 
 
+def back_up_point(point, length):
+    """
+    Backs up a point along his direction vector.
+
+    Parameters
+    ----------
+    point : list[float]
+        The starting point: [x, y, z, qw, qx, qy, qz] [m, m, m, -, -, -, -]
+    length : float
+        The distance to back up the point [m].
+
+    Returns
+    -------
+    list[float]   
+        The backed up point: [x, y, z, qw, qx, qy, qz] [m, m, m, -, -, -, -]
+    """
+
+    # splits infos from the point
+    pos = point[:3]
+    r = R.from_quat(point[3:7], scalar_first=True)
+
+    # gets the direction vector 
+    direction = r.apply([0, 0, 1])  # Direction vector of the end effector
+
+    # Normalize the direction vector (just in case)
+    direction = direction / np.linalg.norm(direction)
+
+    # Compute the end position
+    end_pos = pos + direction * length
+
+    # prints results for verification
+    #print(pos)
+    #print(end_pos)
+
+    # returns the new point
+    return([end_pos[0], end_pos[1], end_pos[2], point[3], point[4], point[5], point[6]])
+
+
 
 
 # ============================================================================================
@@ -179,7 +217,7 @@ def interpolate_lines(points, threshold):
 # test zone de travail
 #traj_points = [[0, 0.3, 0.4], [0.3, -0.1, 0.4]]
 # Z shape
-#traj_points = [[0.064, 0.303, 0.35650000000000004], [0.064, 0.343, 0.35650000000000004], [0.10400000000000001, 0.303, 0.35650000000000004], [0.10400000000000001, 0.343, 0.35650000000000004], [0.10400000000000001, 0.343, 0.38650000000000007]]
+#traj_points = [[0.064, 0.303, 0.15650000000000004], [0.064, 0.343, 0.15650000000000004], [0.10400000000000001, 0.303, 0.15650000000000004], [0.10400000000000001, 0.343, 0.15650000000000004], [0.10400000000000001, 0.343, 0.18650000000000007]]
 # Z shape then hit table
 #traj_points = [[0.104, 0.343, 0.2], [0.104, 0.343, 0.1], [0.104, 0.343, 0], [0.104, 0.343, -0.1], [0.104, 0.343, 0.3]]
 # rectangle shape
@@ -201,15 +239,24 @@ def interpolate_lines(points, threshold):
 
 #for i in traj_points:
 #    joint_trajectory.append([i[0]/1000,i[1]/1000,i[2]/1000,math.degrees(i[3]),math.degrees(i[4]),math.degrees(i[5])])
-#for i in traj_points:
-#    joint_trajectory.append([i[0],i[1],i[2],180.1,0,0])
+'''for i in traj_points:
+    joint_trajectory.append([i[0],i[1],i[2],0.01,1.01,0.01,0.01])
+    r = R.from_quat([0.01,0.01,1.01,0.01], scalar_first=True)
+    normal = r.as_mrp()
+    length = -0.25
+    pos = i[:3]
+    print(pos)
+    end_pos = (np.array(pos) - np.array(normal) * length)  # Ending at the correct point
+    print(end_pos)
+    joint_trajectory.append([end_pos[0], end_pos[1], end_pos[2], 0.01, 1.01, 0.01, 0.01])
+'''
 #print(joint_trajectory)
 
 
 # ============================================================================================
 # ===                                       3D shapes                                     ====
 # ============================================================================================
-joint_trajectory = [
+'''joint_trajectory = [
     [ 0.0957, 0.35  , 0.231 ,-0.2363, 0.3032, 0.8525, 0.3541],
     [ 0.0829, 0.3978, 0.231 ,-0.4271,-0.1594, 0.8485, 0.2686],
     [ 0.0478, 0.4329, 0.231 ,-0.5495,-0.5581, 0.6138, 0.0992],
@@ -246,11 +293,24 @@ joint_trajectory = [
     [ 0.0899, 0.1373, 0.0957,-0.2   , 0.9754, 0.0744, 0.0549],
     [ 0.1843, 0.2107, 0.0957,-0.3298, 0.8196, 0.4344, 0.1756],
     [ 0.2292, 0.3215, 0.0957,-0.5025, 0.5046, 0.6682, 0.2153]
+]'''
+# points of the trajectory
+joint_trajectory_raw = [
+    [ 0.0957, 0.35  , 0.231 ,-0.2363, 0.3032, 0.8525, 0.3541],
+    [ 0.0829, 0.3978, 0.231 ,-0.4271,-0.1594, 0.8485, 0.2686],
+    [-0.0829, 0.3978, 0.231 , 0.3158, 0.5473, 0.6502, 0.4219]
 ]
 
-#joint_trajectory = []
-#for i in joint_trajectory_raw:
-#    joint_trajectory.append([i[0],i[1],i[2],math.degrees(i[3]),math.degrees(i[4]),math.degrees(i[5])])
+
+joint_trajectory = []
+for i in joint_trajectory_raw:
+    # for each point in the trajectory
+    joint_trajectory.append(i)
+
+    # Compute the back up point
+    length = -0.1
+    back_up = back_up_point(i, length)
+    joint_trajectory.append(back_up)
 
 #print("==================================================================================================")
 #print(f"Voila les points demandés en entrée: ({len(joint_trajectory)} points)")
@@ -258,7 +318,7 @@ joint_trajectory = [
 #print("==================================================================================================")
 
 # interpolates the trajectory
-interpolated_traj = interpolate_lines(joint_trajectory, 0.006)
+interpolated_traj = interpolate_lines(joint_trajectory, 0.6)
 
 #print("==================================================================================================")
 #print(f"Voila les points demandés en entrée avec des intermediaires pour raccourcir la distance: ({len(interpolated_traj)} points)")
@@ -271,6 +331,6 @@ traj = compute_joint_trajectory_for_points_tab(interpolated_traj, home)
 
 # adds home position at start and finish
 traj = [home] + traj + [home]
-
+print(interpolated_traj)
 # Generate trajectory file
 generate_trajectory_file(traj, filename="traj.json")
