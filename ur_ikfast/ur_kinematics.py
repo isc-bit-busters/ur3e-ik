@@ -1,6 +1,30 @@
+import json
 import math
 import numpy as np
 from ur_ikfast.best_trajectory import TrajectoryPlanner
+
+def generate_trajectory(data, filename="trajectory.json"):
+    modTraj = []
+    time_step = 2  # Incrément du temps
+    time = 4
+
+    for arr in data:
+        positions = [round(float(x), 4) if abs(x) >= 1e-4 else 0.0 for x in arr]
+        velocities = [0.0] * 6  # Vélocités à zéro
+        modTraj.append(
+            {
+                "positions": positions,
+                "velocities": velocities,
+                "time_from_start": [time, 0],
+            }
+        )
+        time += time_step
+
+    with open(filename, "w") as f:
+        json.dump({"modTraj": modTraj}, f, indent=4)
+
+    print(f"Fichier JSON '{filename}' généré avec succès.")
+
 
 def quaternion_from_matrix(matrix):
     """Return quaternion from rotation matrix.
