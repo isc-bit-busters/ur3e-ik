@@ -181,7 +181,8 @@ class MultiURKinematics():
 
         for ee_pose in ee_poses:
             sol = self.kinematics.inverse(ee_pose=ee_pose, all_solutions=all_solutions, q_guess=q_guess, max_retries=max_retries, pertubation=pertubation)
-            solutions.append(sol)
+            if sol is not None:
+                solutions.append(sol)
         return solutions
     
     def inverse_optimal(self, ee_poses, q_guess=np.zeros(6), max_retries=5, pertubation=1e-3):
