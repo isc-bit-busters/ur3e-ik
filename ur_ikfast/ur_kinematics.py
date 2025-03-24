@@ -108,7 +108,7 @@ class URKinematics():
             if n_solutions > 0:
                 if all_solutions:
                     return joint_configs
-                return self.best_ik_sol(joint_configs, q_guess)
+                return best_ik_sol(joint_configs, q_guess)
             
             # Pertubate the pose and try again if no solution is found
             # print(f"Failed to find a solution, pertubating the pose by {pertubation} for attempt {attempt+1}")
@@ -121,34 +121,34 @@ class URKinematics():
         # print("Failed to find a solution")
         return None
     
-    def best_ik_sol(sols, q_guess, weights=np.ones(6)):
-        """
-        Get best IK solution
+def best_ik_sol(sols, q_guess, weights=np.ones(6)):
+    """
+    Get best IK solution
 
-        Parameters:
-            sols: list of joint angles
-            q_guess: set of joint values to find the closest solution to
-            weights: weights for each joint
-        Returns:
-            best solution
-        """
-        valid_sols = []
-        for sol in sols:
-            test_sol = np.ones(6) * 9999.
-            for i in range(6):
-                for add_ang in [-2. * np.pi, 0, 2. * np.pi]:
-                    test_ang = sol[i] + add_ang
-                    if (abs(test_ang) <= 2. * np.pi
-                            and abs(test_ang - q_guess[i]) <
-                            abs(test_sol[i] - q_guess[i])):
-                        test_sol[i] = test_ang
-            if np.all(test_sol != 9999.):
-                valid_sols.append(test_sol)
-        if not valid_sols:
-            return None
-        best_sol_ind = np.argmin(
-            np.sum((weights * (valid_sols - np.array(q_guess)))**2, 1))
-        return valid_sols[best_sol_ind]
+    Parameters:
+        sols: list of joint angles
+        q_guess: set of joint values to find the closest solution to
+        weights: weights for each joint
+    Returns:
+        best solution
+    """
+    valid_sols = []
+    for sol in sols:
+        test_sol = np.ones(6) * 9999.
+        for i in range(6):
+            for add_ang in [-2. * np.pi, 0, 2. * np.pi]:
+                test_ang = sol[i] + add_ang
+                if (abs(test_ang) <= 2. * np.pi
+                        and abs(test_ang - q_guess[i]) <
+                        abs(test_sol[i] - q_guess[i])):
+                    test_sol[i] = test_ang
+        if np.all(test_sol != 9999.):
+            valid_sols.append(test_sol)
+    if not valid_sols:
+        return None
+    best_sol_ind = np.argmin(
+        np.sum((weights * (valid_sols - np.array(q_guess)))**2, 1))
+    return valid_sols[best_sol_ind]
 
 class MultiURKinematics():
     """
