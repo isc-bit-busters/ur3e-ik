@@ -233,9 +233,6 @@ class MultiURKinematics():
         
         secure_solution = ValidateRobotPosition(solutions, logs=False).finalPositions
 
-        print(f"Found {len(secure_solution)} secure solutions")
-        print(secure_solution)
-
         if len(secure_solution) == 0:
             print("No secure solutions found")
             return None
