@@ -224,6 +224,10 @@ class MultiURKinematics():
         """
         solutions = self.inverse(ee_poses=ee_poses, all_solutions=True, q_guess=q_guess, max_retries=max_retries, pertubation=pertubation)
 
+        # If no solutions are found, return None
+        if not solutions:
+            return None
+
         best_trajectory = self.planner.best_first_search(solutions)
 
         return best_trajectory
