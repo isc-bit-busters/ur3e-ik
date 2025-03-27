@@ -64,6 +64,10 @@ class TrajectoryPlanner:
         nodes: List of possible joint states at each step
         """
         trajectories = []
+
+        # If there are no nodes, return an empty trajectory
+        if len(nodes) == 0:
+            return Trajectory([], self.joint_weights)
         
         # Compute all possibilities for node 0 to node 1
         for i in nodes[0]:

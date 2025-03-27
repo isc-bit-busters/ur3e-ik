@@ -3,6 +3,8 @@ import math
 import numpy as np
 from ur_ikfast.best_trajectory import TrajectoryPlanner
 
+from security import ValidateRobotPosition
+
 def generate_trajectory(data, filename="trajectory.json"):
     modTraj = []
     time_step = 2  # Incrément du temps
@@ -208,7 +210,7 @@ class MultiURKinematics():
         for ee_pose in ee_poses:
             sol = self.kinematics.inverse(ee_pose=ee_pose, all_solutions=all_solutions, q_guess=q_guess, max_retries=max_retries, pertubation=pertubation)
             if sol is not None:
-                solutions.append(sol)
+                solutions.append(sol.tolist())
         return solutions
     
     def inverse_optimal(self, ee_poses, q_guess=np.zeros(6), max_retries=5, pertubation=1e-3):
@@ -226,7 +228,18 @@ class MultiURKinematics():
         """
         solutions = self.inverse(ee_poses=ee_poses, all_solutions=True, q_guess=q_guess, max_retries=max_retries, pertubation=pertubation)
 
-        best_trajectory = self.planner.best_first_search(solutions)
+        # If no solutions are found, return None
+        if not solutions:
+            print("No solutions found")
+            return None
+        
+        secure_solution = ValidateRobotPosition(solutions, logs=False).finalPositions
+
+        if len(secure_solution) == 0:
+            print("No secure solutions found")
+            return None
+
+        best_trajectory = self.planner.best_first_search(secure_solution)
 
         return best_trajectory
     
