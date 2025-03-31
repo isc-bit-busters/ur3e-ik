@@ -214,31 +214,50 @@ class MultiURKinematics():
             if sol is not None:
                 solutions.append(sol.tolist())
         return solutions
-    
-    def inverse_optimal(self, ee_poses, q_guess=np.zeros(6), max_retries=5, pertubation=1e-3):
+
+    def inverse_optimal(
+        self, ee_poses, q_guess=np.zeros(6), max_retries=5, pertubation=1e-3, logs=True
+    ):
         """
         Compute the optimal joint trajectory for a list of end-effector poses.
-        
+
         Parameters:
             ee_poses (list): List of end-effector poses to compute the inverse kinematics for
             q_guess (np.ndarray): Set of joint values to find the closest solution to
             max_retries (int): Maximum number of retries to find a solution
             pertubation (float): Pertubation to apply to the pose if no solution is found
-            
+
         Returns:
             List of joint angles for the optimal trajectory
         """
-        solutions = self.inverse(ee_poses=ee_poses, all_solutions=True, q_guess=q_guess, max_retries=max_retries, pertubation=pertubation)
+        solutions = self.inverse(
+            ee_poses=ee_poses,
+            all_solutions=True,
+            q_guess=q_guess,
+            max_retries=max_retries,
+            pertubation=pertubation,
+        )
 
-        # If no solutions are found, return None
-        if not solutions:
-            print("No solutions found")
+        def checkForSolutions(l) -> bool:
+            if not l:
+                if logs:
+                    print("No solutions found")
+                return False
+            valid = True
+            for i, s in enumerate(solutions):
+                if len(s) == 0:
+                    if logs:
+                        print(f"No solutions found for point : {i}")
+                    valid = False
+
+            return valid
+
+        if not checkForSolutions(solutions):
             return None
-        
-        secure_solution = ValidateRobotPosition(solutions, logs=False).finalPositions
 
-        if len(secure_solution) == 0:
-            print("No secure solutions found")
+        secure_solution = ValidateRobotPosition(solutions, logs=logs).finalPositions
+
+        if not checkForSolutions(secure_solution):
             return None
 
         best_trajectory = self.planner.best_first_search(secure_solution)
