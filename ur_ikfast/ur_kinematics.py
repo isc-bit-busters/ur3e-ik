@@ -220,7 +220,7 @@ class MultiURKinematics():
         return solutions
 
     def inverse_optimal(
-        self, ee_poses, q_guess=np.zeros(6), max_retries=5, pertubation=1e-3, logs=True
+        self, ee_poses, q_guess=np.zeros(6), max_retries=5, pertubation=1e-3, logs=False
     ):
         """
         Compute the optimal joint trajectory for a list of end-effector poses.
@@ -257,12 +257,12 @@ class MultiURKinematics():
             return valid
 
         if not checkForSolutions(solutions):
-            return None
+            raise Exception("No solutions found")
 
         secure_solution = ValidateRobotPosition(solutions, logs=logs).finalPositions
 
         if not checkForSolutions(secure_solution):
-            return None
+            raise Exception("No secure solutions found")
 
         best_trajectory = self.planner.best_first_search(secure_solution)
 

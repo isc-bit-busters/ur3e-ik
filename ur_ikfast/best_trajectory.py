@@ -68,6 +68,8 @@ class TrajectoryPlanner:
         # If there are no nodes, return an empty trajectory
         if len(nodes) == 0:
             return Trajectory([], self.joint_weights)
+        elif len(nodes) == 1:
+            return Trajectory([nodes[0][0]], self.joint_weights)
         
         # Compute all possibilities for node 0 to node 1
         for i in nodes[0]:
