@@ -19,4 +19,4 @@ dependencies = [
 dynamic = ["license"]
 
 [tool.uv.sources]
-security = { git = "https://github.com/6figuress/SecurityModule.git" }
+security = { git = "https://github.com/isc-bit-busters/SecurityModule.git" }
